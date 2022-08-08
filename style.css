@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text&family=Lora:ital,wght@1,600&display=swap');
+
+body {
+	/*background-color: #ff00ff;*/
+	background-image: url("res/bg.jpg");
+	font-family: 'Crimson Text', serif;
+}
+
+h3 {
+	font-family: 'Lora', serif;
+}
+
+.epicTitle {
+	border-bottom: 2px solid #ff4444;
+	background-color: #ff000088;
+}
+
+.info {
+	color: #ff9999;
+	background-color: #44004499;
+	border: 1px solid white;
+	width:18%;
+	float: left;
+}
+
+#gameCanvas {
+	border:1px solid black;
+}
