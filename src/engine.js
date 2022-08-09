@@ -16,19 +16,27 @@ let levelStart; let spawnRate;
 let player;
 let playing;
 
+let game =
+{
+	res: 20,
+	w: 32,
+	h: 24,
+	time: 0
+};
+
 function place(type)
 {
-	if (type == 2) console.log("bing!"); if (type == 3) console.log("bong!");
-	let locX = Math.floor(Math.random() * 32); let locY = Math.floor(Math.random() * 24);
-	if (level[locY][locX] || Math.abs((locX * 20 + 10) - (player.x + 10)) < 120 && Math.abs((locY * 20 + 10) - (player.y + 10)) < 120) place(type);
+	//if (type == 2) console.log("bing!"); if (type == 3) console.log("bong!");
+	let locX = Math.floor(Math.random() * game.w); let locY = Math.floor(Math.random() * game.h);
+	if (level[locY][locX] || Math.abs((locX * game.res + 10) - (player.x + 10)) < game.res * 6 && Math.abs((locY * game.res + 10) - (player.y + 10)) < game.res * 6) place(type);
 	else level[locY][locX] = type;
 }
 
 function removeFromLevel(type)
 {
-	for (let r = 0; r < 24; r++)
+	for (let r = 0; r < game.h; r++)
 	{
-		for (let c = 0; c < 32; c++)
+		for (let c = 0; c < game.w; c++)
 		{
 			if (level[r][c] == type)
 			{
@@ -49,15 +57,15 @@ function digLevel(px, py)
 {
 	delved++;
 	delveLevel.innerHTML = delved;
-	level = Array(24).fill().map(() => Array(32))
+	level = Array(game.h).fill().map(() => Array(game.w))
 	
 	/* Levelcode 101!
 	0 is empty space, 1 is wall, 2 is door, 3 is key
 	4 is food, 5 is shield. That's it!
 	*/
-	for (let r = 0; r < 24; r++)
+	for (let r = 0; r < game.h; r++)
 	{
-		for (let c = 0; c < 32; c++)
+		for (let c = 0; c < game.w; c++)
 		{
 			if (r == py && (c == px || c == px + 1)) level [r][c] = 0; // make sure the player isn't stuck in or surrounded by a wall
 			else if (Math.random() < .1) level[r][c] = 1;
@@ -145,6 +153,11 @@ function Player()
 	GameObject.call(this, 100, 100, 20, 20, "#991", 5, 0, 0);
 	
 	this.hunger = 100;
+	this.grumble = function()
+	{
+		this.hunger--;
+		if (this.hunger < 50) this.feel("hungry");
+	}
 	
 	this.thoughts = 
 	{
@@ -158,18 +171,19 @@ function Player()
 		thoughts.innerHTML = thought.text;
 		thought.inMemory = true;
 	}
+	this.status = "fine";
 	this.feel = function(feeling)
 	{
-		status.innerHTML = feeling;
+		if (this.status != "hungry" && this.status != "starving") // hunger beats out all other emotions according to maslow's heirarchy of needs
+			this.status = feeling;
+		status.innerHTML = this.status;
 	}
-	
-	this.feel("fine");
 	
 	this.eat = function()
 	{
-		this.hunger += 50;
+		this.hunger = Math.min(100, this.hunger + 50);
 		if (this.hunger > 50) this.feel("fine");
-		if (this.hunger > 100) this.feel("full");
+		if (this.hunger > 90) this.feel("full");
 	}
 	
 	this.calculateMovement = function()
@@ -180,7 +194,6 @@ function Player()
 	}
 	this.move = function() 
 	{
-		if (this.hunger < 50) this.feel("hungry");
 		this.calculateMovement();
 		if (!this.testCollision(this.moveX, 0)) this.x += this.speed * this.moveX;
 		if (!this.testCollision(0, this.moveY)) this.y += this.speed * this.moveY;
@@ -190,9 +203,9 @@ function Player()
 	}
 }
 
-function Enemy(x, y, w, h, c, s, ix, iy)
+function Enemy(x, y)
 {
-	GameObject.call(this, x, y, w, h, c, s, ix, iy);
+	GameObject.call(this, x, y, game.res, game.res, "#902", 2, 0, 20);
 	this.generateOffsets = function(min, max)
 	{
 		this.followOffsetX = Math.floor(Math.random() * (max - min)) + min;
@@ -233,9 +246,9 @@ function Enemy(x, y, w, h, c, s, ix, iy)
 
 function spawnEnemy()
 {
-	locX = Math.floor(Math.random() * 32); locY = Math.floor(Math.random() * 24);
-	if (level[locY][locX] == 1 || Math.abs((locX * 20 + 10) - (player.x + 10)) < 100 && Math.abs((locY * 20 + 10) - (player.y + 10)) < 100) spawnEnemy();
-	else toRender.push(new Enemy(locX * 20, locY * 20, 20, 20, "#902", 2, 0, 20));
+	locX = Math.floor(Math.random() * game.w); locY = Math.floor(Math.random() * game.h);
+	if (level[locY][locX] == 1 || Math.abs((locX * game.res + 10) - (player.x + 10)) < game.res * 4 && Math.abs((locY * game.res + 10) - (player.y + 10)) < game.res * 4) spawnEnemy();
+	else toRender.push(new Enemy(locX * game.res, locY * game.res));
 }
 
 function keydown(e)
@@ -250,7 +263,11 @@ function keydown(e)
 		player.moveUp = true;
 	if (key == 40 || key == 83)
 		player.moveDown =  true;
-	if (key == 32) playing = true;
+	if (key == 32 && !playing)
+	{
+		playing = true;
+		game.start = elapsed;
+	}
 }
 
 function keyup(e)
@@ -308,7 +325,12 @@ function drawGame()
 		toRender[i].move();
 		if (Math.abs(toRender[i].x - player.x) <= 100 && Math.abs(toRender[i].y - player.y) <= 100)
 		{
-			if(i > 0 && !player.thoughts.frogs.inMemory) player.think(player.thoughts.frogs);
+			if (i > 0)
+			{
+				player.feel("scared");
+				if(!player.thoughts.frogs.inMemory) player.think(player.thoughts.frogs);
+			}
+			else player.feel("fine");
 			toRender[i].render();
 		}
 	}
@@ -318,22 +340,6 @@ function drawGame()
 		{
 			if (Math.abs((c * 20 + 10) - (player.x + 10)) <= 100 && Math.abs((r * 20 + 10) - (player.y + 10)) <= 100)
 			{
-				/*if (level[r][c] == 1)
-				{
-					//ctx.fillStyle = "#111";
-					//ctx.fillRect(c * 20, r * 20, 20, 20);
-					ctx.drawImage(walls, (c * 20) % walls.width, (r * 20) % walls.height, 20, 20, (c * 20) % walls.width, (r * 20) % walls.height, 20, 20);
-				}
-				if (level[r][c] == 2)
-				{
-					if (!player.thoughts.doors.inMemory) player.think(player.thoughts.doors);
-					ctx.drawImage(sprites, 0, 40, 20, 20, c * 20, r * 20, 20, 20);
-				}
-				if (level[r][c] == 3)
-				{
-					if (!player.thoughts.doors.inMemory) player.think(player.thoughts.doors);
-					ctx.drawImage(sprites, 0, 40, 20, 20, c * 20, r * 20, 20, 20);
-				}*/
 				switch(level[r][c])
 				{
 					case 1:
@@ -353,8 +359,8 @@ function drawGame()
 			}
 		}
 	}
-	if (Math.floor(elapsed / 1000) > timeLived) player.hunger--;
-	timeLived = Math.floor(elapsed / 1000);
+	if (Math.floor((elapsed - game.start) / 1000) > timeLived) player.grumble();
+	timeLived = Math.floor((elapsed - game.start) / 1000);
 	counter.innerHTML = timeLived;
 	//console.log("global time is", timeLived, "local time is", timeLived - levelStart);
 	if ((timeLived - levelStart) % spawnRate == 0 && timeLived - levelStart > lastSpawn)

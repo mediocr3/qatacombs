@@ -20,7 +20,13 @@ h3 {
 	background-color: #44004499;
 	border: 1px solid white;
 	width:18%;
+}
+
+.left {
 	float: left;
+}
+.right {
+	float: right;
 }
 
 #gameCanvas {
