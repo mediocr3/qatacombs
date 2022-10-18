@@ -1,10 +1,12 @@
 let canvas = document.getElementById("gameCanvas");
+let faceCanvas = document.getElementById("faceCanvas");
 let counter = document.getElementById("counter");
 let status = document.getElementById("status");
 let thoughts = document.getElementById("thoughts");
 let delveLevel = document.getElementById("delveLevel");
 let delved;
 let ctx = canvas.getContext("2d");
+let fctx = faceCanvas.getContext("2d");
 let toRender;
 //let interval = 40;
 let timeLived = 0.0;
@@ -53,6 +55,12 @@ function findKey()
 	place(2);
 }
 
+function findFood()
+{
+	removeFromLevel(4);
+	player.eat();
+}
+
 function digLevel(px, py)
 {
 	delved++;
@@ -76,6 +84,7 @@ function digLevel(px, py)
 	// At first doors are locked behind doors every third level starting with the second. Starting on level 15, however, every door is locked.
 	if (delved > 14 || delved % 3 == 2) place(3); // you have either a key or a door. once you collect a key, then it places a door.
 	else place(2);
+	if (Math.random() < .33) place(4); // 1 in 3 chance of placing food on a level
 }
 
 
@@ -101,20 +110,14 @@ function isCollide(a, ax, ay, bx, by, bw, bh)
 
 function GameObject(x, y, w, h, c, s, ix, iy)
 {
-	this.x = x;
-	this.y = y;
-	this.width = w;
-	this.height = h;
+	this.x = x; this.y = y;
+	this.width = w; this.height = h;
 	this.color = c;
-	this.imageX = ix;
-	this.imageY = iy;
+	this.imageX = ix; this.imageY = iy;
 	this.speed = s;
-	this.moveLeft = false;
-	this.moveRight = false;
-	this.moveUp = false;
-	this.moveDown = false;
-	this.moveX = 0;
-	this.moveY = 0;
+	this.moveLeft = false; this.moveRight = false;
+	this.moveUp = false; this.moveDown = false;
+	this.moveX = 0; this.moveY = 0;
 	this.render = function()
 	{
 		if (ix != null && iy != null)
@@ -162,9 +165,10 @@ function Player()
 	this.thoughts = 
 	{
 		beginning: {text: "I have finally decided to descend these horrible qatacombs! Wonder what these noises I am hearing are?", inMemory: false},
-		frogs: {text: "Alas - a creature in these tunnels! It looks to be some sort of humanoid frog, but it does not look friendly! I do not want to be on the receiving end of that stick!", inMemory: false},
-		doors: {text: "A door! Mayhaps that allow me to delve even further into these qatacombs strange?", inMemory: false},
-		keys: {text: "Is that some sort of rusty key? I hope it still works!", inMemory: false}
+		frogs: {text: "Alas - a qreature in these tunnels! It looks to be some sort of humanoid frog, but it does not look friendly! I do not want to be on the receiving end of that stiqq!", inMemory: false},
+		doors: {text: "A door! Mayhaps that allow me delve even further into these qatacombs strange?", inMemory: false},
+		keys: {text: "Ist that some sort of rusty qey? I hope it still works!", inMemory: false},
+		food: {text: "What a scrumptious meal on the ground! I simply must have this subterranean feast!", inMemory: false}
 	};
 	this.think = function(thought)
 	{
@@ -174,6 +178,14 @@ function Player()
 	this.status = "fine";
 	this.feel = function(feeling)
 	{
+		switch (feeling)
+		{
+			case "scared":
+				drawFace(1, 0);
+				break;
+			default:
+				drawFace(0, 0);
+		}
 		if (this.status != "hungry" && this.status != "starving") // hunger beats out all other emotions according to maslow's heirarchy of needs
 			this.status = feeling;
 		status.innerHTML = this.status;
@@ -182,7 +194,7 @@ function Player()
 	this.eat = function()
 	{
 		this.hunger = Math.min(100, this.hunger + 50);
-		if (this.hunger > 50) this.feel("fine");
+		if (this.hunger > 50) this.status = "fine";
 		if (this.hunger > 90) this.feel("full");
 	}
 	
@@ -200,6 +212,7 @@ function Player()
 		
 		if (this.testCollision(this.moveX, this.moveY, 2)) setupLevel();
 		if (this.testCollision(this.moveX, this.moveY, 3)) findKey();
+		if (this.testCollision(this.moveX, this.moveY, 4)) findFood();
 	}
 }
 
@@ -301,6 +314,7 @@ function setupGame()
 	playing = false;
 	delved = 0;
 	toRender = new Array;
+	face = new Image(); face.src = "res/faces.png";
 	bg = new Image(); bg.src = "res/cavebg.jpg";
 	sprites = new Image(); sprites.src = "res/spritesheet.png";
 	walls = new Image(); walls.src = "res/walls.jpg";
@@ -308,6 +322,8 @@ function setupGame()
 	player = new Player(100, 100, 20, 20, "#991", 5);
 	toRender.push(player);
 	player.think(player.thoughts.beginning);
+	fctx.fillStyle = "000"; fctx.fillRect(0, 0, 240, 240);
+	drawFace(0, 0);
 	setupLevel();
 }
 
@@ -353,6 +369,9 @@ function drawGame()
 						if (!player.thoughts.keys.inMemory) player.think(player.thoughts.keys);
 						ctx.drawImage(sprites, 20, 40, 20, 20, c * 20, r * 20, 20, 20);
 						break;
+					case 4:
+						if (!player.thoughts.food.inMemory) player.think(player.thoughts.food);
+						ctx.drawImage(sprites, 40, 40, 20, 20, c * 20, r * 20, 20, 20);
 					default:
 						break;
 				}
@@ -373,6 +392,14 @@ function drawGame()
 	//window.requestAnimationFrame(drawScreen);
 }
 
+function drawFace(x, y)
+{
+	let res = 240;
+	fctx.globalAlpha = 0.05;
+	fctx.drawImage(face, res * x, res * y, res, res, 0, 0, res, res);
+	fctx.globalAlpha = 1.0;
+}
+
 function drawScreen()
 {
 	if (playing) drawGame();
@@ -389,6 +416,8 @@ function drawScreen()
 		ctx.fillText("Prepared to descend into these Qatacombs?", canvas.width * .5, canvas.height * 0.2);
 		ctx.font = "30px 'Lora'";
 		ctx.fillText("Press SPACE to start the game!", canvas.width * .5, canvas.height * 0.8);
+		drawFace(0, 0);
+		//ctx.drawImage(face, 0, 0, 240, 240, 0, 0, 240, 240);
 	}
 }
 
