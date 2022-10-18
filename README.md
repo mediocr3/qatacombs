@@ -11,14 +11,17 @@ next update/couple updates:
 * a proper death screen which displays how you died
 * starvation
 * smelling food when it's near you
+
 near future:
 * sound system with ambience, plenty audio cues about what's around you. ideally the game should be completely playable blind, but it will probably never get to that point.
 * saving your statistics: number of games played, longest/shortest run, number of wins
 * wizard enemy
+
 when i get around to it
 * animations
 * secret, third enemy
 * an end to the game!
+
 possible additions:
 * possibly switching the game's sprites to a higher resolution, because 20x20 doesn't look very good and makes a lot of people squint when playing. this might require a scrolling camera to fit on screen with the side panels if i go too high res. either way this will break a lot of things and be very time consuming.
 * an even more secret, fourth enemy
