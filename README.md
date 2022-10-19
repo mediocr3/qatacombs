@@ -7,9 +7,13 @@ everyone knows that all video games must include:
 to be considered "good" or at least "passable". well luckily enough, this project contains all elements of the "video-food-pyramid", as scholars call it. and someday this game might even have other things in it too.
 
 # To Do
+✔ means done, ~✔ means sorta done
+
 next update/couple updates:
-* a proper death screen which displays how you died
-* starvation
+* a proper death screen which displays how you died ~✔
+* starvation ✔
+* fixing the bug where you sometimes get stuck in walls when you go through doors
+* making the character portrait look better
 * smelling food when it's near you
 
 near future:
