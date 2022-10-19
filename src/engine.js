@@ -17,6 +17,7 @@ let level;
 let levelStart; let spawnRate;
 let player;
 let playing;
+let startText = "Prepared to descend into these Qatacombs?";
 
 let game =
 {
@@ -160,6 +161,8 @@ function Player()
 	{
 		this.hunger--;
 		if (this.hunger < 50) this.feel("hungry");
+		if (this.hunger < 10) this.feel("starving");
+		if (this.hunger < 0) this.die("hunger");
 	}
 	
 	this.thoughts = 
@@ -214,6 +217,22 @@ function Player()
 		if (this.testCollision(this.moveX, this.moveY, 3)) findKey();
 		if (this.testCollision(this.moveX, this.moveY, 4)) findFood();
 	}
+	this.die = function(cause)
+	{
+		switch(cause)
+		{
+			case "frog":
+				startText = "The frog's spear ist thy demise.";
+				break;
+			case "hunger":
+				startText = "Hunger taketh thy life.";
+				break;
+			default:
+				startText = "You died in a way I wasn't even prepared for.";
+				break;
+		}
+		start = null;
+	}
 }
 
 function Enemy(x, y)
@@ -251,7 +270,7 @@ function Enemy(x, y)
 		//ctx.fillStyle(#444);
 		//ctx.fillRect(Math.abs(horDist - this.followOffsetX));
 		
-		if (Math.abs(player.x - this.x) + Math.abs(player.y - this.y) < 15) start = null;
+		if (Math.abs(player.x - this.x) + Math.abs(player.y - this.y) < 15) player.die("frog");
 		//this.x = Math.min(Math.max(this.x, 0), canvas.width);
 		//this.y = Math.min(Math.max(this.y, 0), canvas.height);
 	}
@@ -322,6 +341,7 @@ function setupGame()
 	player = new Player(100, 100, 20, 20, "#991", 5);
 	toRender.push(player);
 	player.think(player.thoughts.beginning);
+	fctx.globalAlpha = 0.05;
 	fctx.fillStyle = "000"; fctx.fillRect(0, 0, 240, 240);
 	drawFace(0, 0);
 	setupLevel();
@@ -395,9 +415,7 @@ function drawGame()
 function drawFace(x, y)
 {
 	let res = 240;
-	fctx.globalAlpha = 0.05;
 	fctx.drawImage(face, res * x, res * y, res, res, 0, 0, res, res);
-	fctx.globalAlpha = 1.0;
 }
 
 function drawScreen()
@@ -413,10 +431,11 @@ function drawScreen()
 		ctx.fillStyle = "#e44";
 		ctx.textAlign = "center";
 		ctx.font = "22px 'Crimson Text'";
-		ctx.fillText("Prepared to descend into these Qatacombs?", canvas.width * .5, canvas.height * 0.2);
+		ctx.fillText(startText, canvas.width * .5, canvas.height * 0.2);
 		ctx.font = "30px 'Lora'";
 		ctx.fillText("Press SPACE to start the game!", canvas.width * .5, canvas.height * 0.8);
-		drawFace(0, 0);
+		if (startText.charAt(0) == 'P') fctx.fillRect(0, 0, 240, 240);
+		else drawFace(2, 0);
 		//ctx.drawImage(face, 0, 0, 240, 240, 0, 0, 240, 240);
 	}
 }
