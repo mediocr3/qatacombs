@@ -19,6 +19,11 @@ let player;
 let playing;
 let startText = "Prepared to descend into these Qatacombs?";
 
+
+// TO DO: make a game object that's all encompassing
+// so there isn't this spam of variables above me
+// looking at this shit everytime i open up npp makes
+// me want to give up on this project
 let game =
 {
 	res: 20,
@@ -50,18 +55,6 @@ function removeFromLevel(type)
 	}
 }
 
-function findKey()
-{
-	removeFromLevel(3);
-	place(2);
-}
-
-function findFood()
-{
-	removeFromLevel(4);
-	player.eat();
-}
-
 function digLevel(px, py)
 {
 	delved++;
@@ -76,13 +69,15 @@ function digLevel(px, py)
 	{
 		for (let c = 0; c < game.w; c++)
 		{
-			if (r == py && (c == px || c == px + 1)) level [r][c] = 0; // make sure the player isn't stuck in or surrounded by a wall
+			// TO DO: turn the line below this one into a process after the for loop, switch up px and py and have it actually check for collisions
+			// the collision bug is fixed but it would still be much more elegant for it to be outside of this for loop so it doesnt check every time it carves a wall
+			if ((r == py || r == py + 1) && (c == px || c == px + 1)) level [r][c] = 0; // make sure the player isn't stuck in or surrounded by a wall
 			else if (Math.random() < .1) level[r][c] = 1;
 			else level[r][c] = 0;
 		}
 	}
 	
-	// At first doors are locked behind doors every third level starting with the second. Starting on level 15, however, every door is locked.
+	// At first doors are locked behind keys every third level starting with the second. Starting on level 15, however, every door is locked.
 	if (delved > 14 || delved % 3 == 2) place(3); // you have either a key or a door. once you collect a key, then it places a door.
 	else place(2);
 	if (Math.random() < .33) place(4); // 1 in 3 chance of placing food on a level
@@ -179,7 +174,7 @@ function Player()
 		thought.inMemory = true;
 	}
 	this.status = "fine";
-	this.feel = function(feeling)
+	this.feel = function(feeling) // to do: create a "feeling" object that includes the urgency of the feeling to clean up the heirarchy of needs
 	{
 		switch (feeling)
 		{
@@ -189,7 +184,8 @@ function Player()
 			default:
 				drawFace(0, 0);
 		}
-		if (this.status != "hungry" && this.status != "starving") // hunger beats out all other emotions according to maslow's heirarchy of needs
+		
+		if (feeling == "starving" || (this.status != "hungry" && this.status != "starving")) // hunger beats out all other emotions according to maslow's heirarchy of needs
 			this.status = feeling;
 		status.innerHTML = this.status;
 	}
@@ -201,21 +197,37 @@ function Player()
 		if (this.hunger > 90) this.feel("full");
 	}
 	
+	this.find = function(itemFound)
+	{
+		removeFromLevel(itemFound);
+		switch(itemFound)
+		{
+			case 3: // key (eventually i'll make enums for this i swear)
+				place(2); // place a door
+				break;
+			case 4:
+				this.eat();
+				break;
+			default:
+				break;
+		}
+	}
+	
 	this.calculateMovement = function()
 	{
 		this.moveX = this.moveY = 0; if (this.moveUp) this.moveY--; if (this.moveDown) this.moveY++; if (this.moveLeft) this.moveX--; if (this.moveRight) this.moveX++;
 		if (this.x + this.moveX * this.speed < 0 || this.x + this.moveX * this.speed > canvas.width - 20) this.moveX = 0;
 		if (this.y + this.moveY * this.speed < 0 || this.y + this.moveY * this.speed > canvas.height - 20) this.moveY = 0;
 	}
-	this.move = function() 
+	this.move = function() // one day this function will be like one line but for now it looks like this
 	{
 		this.calculateMovement();
 		if (!this.testCollision(this.moveX, 0)) this.x += this.speed * this.moveX;
 		if (!this.testCollision(0, this.moveY)) this.y += this.speed * this.moveY;
 		
 		if (this.testCollision(this.moveX, this.moveY, 2)) setupLevel();
-		if (this.testCollision(this.moveX, this.moveY, 3)) findKey();
-		if (this.testCollision(this.moveX, this.moveY, 4)) findFood();
+		if (this.testCollision(this.moveX, this.moveY, 3)) this.find(3);
+		if (this.testCollision(this.moveX, this.moveY, 4)) this.find(4);
 	}
 	this.die = function(cause)
 	{
