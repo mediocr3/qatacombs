@@ -12,16 +12,17 @@ to be considered "good" or at least "passable". well luckily enough, this projec
 next update/couple updates:
 * a proper death screen which displays how you died ~✔
 * starvation ✔
-* fixing the bug where you sometimes get stuck in walls when you go through doors
-* making the character portrait look better
+* fixing the bug where you sometimes get stuck in walls when you go through doors ✔
 * smelling food when it's near you
 
 near future:
+* an item that you will gain toward the midgame
 * sound system with ambience, plenty audio cues about what's around you. ideally the game should be completely playable blind, but it will probably never get to that point.
 * saving your statistics: number of games played, longest/shortest run, number of wins
 * wizard enemy
 
 when i get around to it
+* making the character portrait look better
 * animations
 * secret, third enemy
 * an end to the game!
